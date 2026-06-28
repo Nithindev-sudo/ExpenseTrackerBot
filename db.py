@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS txns (
     amount REAL NOT NULL,
     note TEXT,
     type TEXT NOT NULL,
-    chat_id INTEGER NOT NULL,
+    chat_id BIGINT NOT NULL,
     created_at TEXT NOT NULL
 )
 """
@@ -81,6 +81,23 @@ class ExpenseDB:
         if self.is_postgres:
             with self._cursor() as cursor:
                 cursor.execute(POSTGRES_CREATE_TABLE)
+                cursor.execute(
+                    """
+                    DO $$
+                    BEGIN
+                        IF EXISTS (
+                            SELECT 1
+                            FROM information_schema.columns
+                            WHERE table_schema = 'public'
+                              AND table_name = 'txns'
+                              AND column_name = 'chat_id'
+                              AND data_type = 'integer'
+                        ) THEN
+                            ALTER TABLE txns ALTER COLUMN chat_id TYPE BIGINT;
+                        END IF;
+                    END $$;
+                    """
+                )
         else:
             with self.conn:
                 self.conn.executescript(SQLITE_CREATE_TABLE)
