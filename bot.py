@@ -1,4 +1,3 @@
-import asyncio
 import json
 import os
 from datetime import datetime
@@ -11,7 +10,7 @@ from llm_parser import init_llm, extract_expense
 from db import ExpenseDB
 from export import export_data
 
-from telegram import Update, Bot
+from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -142,6 +141,14 @@ async def total_command(update,context):
 
 
 
+async def delete_existing_webhook(application):
+    try:
+        await application.bot.delete_webhook(drop_pending_updates=True)
+        print("Deleted any existing webhook before polling.")
+    except Exception as e:
+        print(f"Warning: could not delete webhook before polling: {e}")
+
+
 def main():
 
 
@@ -153,21 +160,11 @@ def main():
     )
 
 
-    async def delete_existing_webhook():
-        try:
-            temp_bot = Bot(config["telegram_token"])
-            await temp_bot.delete_webhook(drop_pending_updates=True)
-            print("Deleted any existing webhook before polling.")
-        except Exception as e:
-            print(f"Warning: could not delete webhook before polling: {e}")
-
-
     print("Bot running...")
-    asyncio.run(delete_existing_webhook())
 
     app=ApplicationBuilder().token(
         config["telegram_token"]
-    ).build()
+    ).post_init(delete_existing_webhook).build()
 
 
     app.add_handler(
