@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Expense Tracker Dashboard</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #05090f;
+      --panel: rgba(10, 16, 28, 0.95);
+      --panel-soft: rgba(15, 23, 42, 0.9);
+      --border: rgba(148, 163, 184, 0.12);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-alt: #818cf8;
+      --success: #22c55e;
+      --warn: #fb7185;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.15), transparent 18%),
+                  radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.12), transparent 20%),
+                  linear-gradient(180deg, #05090f 0%, #0d1726 100%);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+
+    .page {
+      width: min(1300px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 40px;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 2.5vw, 2.8rem);
+      letter-spacing: -0.04em;
+    }
+
+    .chip,
+    select {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+    }
+
+    select {
+      appearance: none;
+      outline: none;
+      min-width: 180px;
+      cursor: pointer;
+      background-image: linear-gradient(45deg, transparent 50%, rgba(255,255,255,0.12) 50%),
+                        linear-gradient(135deg, rgba(255,255,255,0.12) 50%, transparent 50%);
+      background-position: calc(100% - 20px) calc(1em + 2px), calc(100% - 15px) calc(1em + 2px);
+      background-size: 6px 6px;
+      background-repeat: no-repeat;
+      padding-right: 36px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 20px;
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.20);
+    }
+
+    .panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image: radial-gradient(circle at top right, rgba(56, 189, 248, 0.12), transparent 22%),
+                        radial-gradient(circle at bottom left, rgba(236, 72, 153, 0.1), transparent 18%);
+    }
+
+    .panel h2 {
+      margin: 0 0 16px;
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #dbeafe;
+    }
+
+    .hero-kpi {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .kpi-card {
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.10);
+      border-radius: 22px;
+      padding: 20px;
+      min-height: 120px;
+    }
+
+    .kpi-card strong {
+      display: block;
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+
+    .kpi-card span {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .progress-block {
+      margin-top: 20px;
+      border-radius: 22px;
+      padding: 18px;
+      background: rgba(15, 23, 42, 0.88);
+      border: 1px solid rgba(148, 163, 184, 0.10);
+    }
+
+    .progress-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      color: var(--muted);
+    }
+
+    .progress-head strong {
+      color: var(--text);
+    }
+
+    .bar-base {
+      width: 100%;
+      height: 18px;
+      background: rgba(148, 163, 184, 0.15);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-alt));
+      transition: width 0.5s ease;
+    }
+
+    .bar-fill.alert {
+      background: linear-gradient(90deg, var(--warn), #fbbf24);
+    }
+
+    .chart-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .pulse-control {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .pulse-control label {
+      color: var(--muted);
+      font-size: 0.95rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .time-axis {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .sparkline,
+    .donut {
+      width: 100%;
+    }
+
+    .bar-grid {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-end;
+      min-height: 260px;
+      padding: 24px 14px 10px;
+      background: radial-gradient(circle at top, rgba(56,189,248,0.14), transparent 36%),
+                  linear-gradient(180deg, rgba(15,23,42,0.95), rgba(7, 12, 20, 0.96));
+      border: 1px solid rgba(56,189,248,0.16);
+      border-radius: 24px;
+      box-shadow: inset 0 0 0 1px rgba(56,189,248,0.08);
+    }
+
+    .bar-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      width: 52px;
+      padding: 10px 0 4px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 20px;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .bar-column:hover {
+      transform: translateY(-6px);
+      background: rgba(56,189,248,0.12);
+    }
+
+    .bar-column:hover {
+      transform: translateY(-6px);
+      background: rgba(56,189,248,0.08);
+      border-color: rgba(248,113,113,0.35);
+    }
+
+    .bar-column-fill {
+      width: 22px;
+      border-radius: 999px 999px 0 0;
+      background: linear-gradient(180deg, rgba(248,113,113,0.98), rgba(56,189,248,0.35));
+      transition: height 0.5s ease;
+      box-shadow: 0 0 30px rgba(56,189,248,0.22);
+      position: relative;
+    }
+
+    .bar-column-fill::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(180deg, rgba(255,255,255,0.2), transparent 60%);
+      pointer-events: none;
+    }
+
+    .bar-value {
+      font-size: 0.84rem;
+      color: #7dd3fc;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .bar-column span {
+      color: #cbd5e1;
+      font-size: 0.84rem;
+    }
+
+    .budget-row {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .budget-row strong {
+      display: block;
+      color: var(--text);
+    }
+
+    .list-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+    }
+
+    .list-row:last-child {
+      border-bottom: none;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .legend-item span {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      display: block;
+    }
+
+    .income {
+      color: var(--success);
+    }
+
+    .expense {
+      color: #fda4af;
+    }
+
+    .insight-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .insight-card {
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.10);
+      border-radius: 18px;
+      padding: 18px;
+      min-height: 110px;
+    }
+
+    .insight-card strong {
+      display: block;
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+    }
+
+    .footer {
+      margin-top: 26px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 1080px) {
+      .grid-3,
+      .grid-2,
+      .insight-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .bar-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 700px) {
+      header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .bar-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div>
+        <h1>Expense Dashboard</h1>
+        <p class="chip">Realtime spending insights with goal tracking and trend charts</p>
+      </div>
+      <div>
+        <select id="monthSelect"></select>
+      </div>
+    </header>
+
+    <section class="grid grid-3">
+      <article class="panel">
+        <h2>Performance snapshot</h2>
+        <div class="hero-kpi">
+          <div class="kpi-card"><strong id="spentKpi">₹0</strong><span>Total spent</span></div>
+          <div class="kpi-card"><strong id="netKpi">₹0</strong><span>Net balance</span></div>
+          <div class="kpi-card"><strong id="avgKpi">₹0</strong><span>Average daily spend</span></div>
+        </div>
+        <div class="progress-block">
+          <div class="progress-head"><span>Budget usage</span><strong id="budgetUsage">0%</strong></div>
+          <div class="bar-base"><div id="budgetFill" class="bar-fill"></div></div>
+          <div class="chart-label" id="budgetMeta">0 of 0 used</div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <h2>Spending pulse</h2>
+        <div class="pulse-control">
+          <div>Today is <strong id="pulseDateLabel"></strong></div>
+          <label for="pulseDateSelect">Select date:
+            <input id="pulseDateSelect" type="date" style="border:1px solid rgba(148,163,184,0.18);background:rgba(15,23,42,0.9);color:var(--text);border-radius:10px;padding:10px 12px;" />
+          </label>
+        </div>
+        <div id="spendPulse"></div>
+        <div class="time-axis" id="pulseTimeAxis"></div>
+        <div class="chart-label"><span>Peak hourly spend</span><strong id="peakSpend">₹0</strong></div>
+      </article>
+
+      <article class="panel">
+        <h2>Weekly burn</h2>
+        <div class="chart-label"><span>Spending per week</span><span>Cyber pulse view</span></div>
+        <div id="weeklyBars" class="bar-grid"></div>
+      </article>
+    </section>
+
+    <section class="grid grid-2" style="margin-top: 22px;">
+      <article class="panel">
+        <h2>Category share</h2>
+        <div id="donutChart"></div>
+      </article>
+      <article class="panel">
+        <h2>Budget status</h2>
+        <div id="budgetPanel"></div>
+      </article>
+    </section>
+
+    <section class="grid grid-3" style="margin-top: 22px;">
+      <article class="panel" id="trendPanel"></article>
+      <article class="panel" id="recentPanel"></article>
+      <article class="panel" id="insightPanel"></article>
+    </section>
+
+    <div class="footer">Use <code>?chat_id=123456789</code> to filter this dashboard for a specific Telegram user.</div>
+  </div>
+
+  <script src="data.js"></script>
+  <script>
+    const sampleData = [
+      { id: 1, date: '2026-06-01', category: 'food', amount: 420, note: 'swiggy dinner', type: 'expense', chat_id: 0, created_at: '2026-06-01T10:12:00' },
+      { id: 2, date: '2026-06-02', category: 'travel', amount: 320, note: 'ola ride', type: 'expense', chat_id: 0, created_at: '2026-06-02T08:20:00' },
+      { id: 3, date: '2026-06-03', category: 'income', amount: 75000, note: 'salary credited', type: 'income', chat_id: 0, created_at: '2026-06-03T09:00:00' },
+      { id: 4, date: '2026-06-04', category: 'groceries', amount: 900, note: 'blinkit veggies', type: 'expense', chat_id: 0, created_at: '2026-06-04T17:45:00' },
+      { id: 5, date: '2026-05-22', category: 'bills', amount: 2200, note: 'electricity bill', type: 'expense', chat_id: 0, created_at: '2026-05-22T11:00:00' }
+    ];
+
+    const getQueryParam = name => new URLSearchParams(window.location.search).get(name);
+    const activeChatId = getQueryParam('chat_id');
+    let data = [];
+    let config = {};
+    const monthSelect = document.getElementById('monthSelect');
+    const pulseDateSelect = document.getElementById('pulseDateSelect');
+    const pulseDateLabel = document.getElementById('pulseDateLabel');
+    const today = new Date().toISOString().slice(0, 10);
+
+    function fallbackData() {
+      if (window.EXPENSE_DATA && window.EXPENSE_CONFIG) {
+        return { data: window.EXPENSE_DATA, config: window.EXPENSE_CONFIG };
+      }
+      return {
+        data: sampleData,
+        config: {
+          currency: '₹',
+          monthlyBudget: 50000,
+          budgets: { travel: 8000, food: 12000, groceries: 8000, clothes: 5000, rent: 15000, bills: 4000, luxuries: 5000, investments: 6000, health: 3000, education: 3000, other: 2000 },
+        },
+      };
+    }
+
+    async function fetchRemoteData() {
+      try {
+        const expenseUrl = new URL('/api/expenses', window.location.origin);
+        if (activeChatId) {
+          expenseUrl.searchParams.set('chat_id', activeChatId);
+        }
+        const [respData, respConfig] = await Promise.all([
+          fetch(expenseUrl),
+          fetch('/api/config'),
+        ]);
+        if (!respData.ok || !respConfig.ok) {
+          throw new Error('Remote API unavailable');
+        }
+        return {
+          data: await respData.json(),
+          config: await respConfig.json(),
+        };
+      } catch (error) {
+        console.warn('Remote API unavailable, using fallback data.', error);
+        return fallbackData();
+      }
+    }
+
+    function initializeState() {
+      const activeData = activeChatId ? data.filter(item => String(item.chat_id) === String(activeChatId)) : data;
+      const months = [...new Set(activeData.map(item => item.date.slice(0, 7)))].sort();
+      monthSelect.innerHTML = '';
+      months.forEach(month => {
+        const option = document.createElement('option');
+        option.value = month;
+        option.textContent = month;
+        monthSelect.appendChild(option);
+      });
+      if (!monthSelect.value && months.length) monthSelect.value = months[months.length - 1];
+      pulseDateSelect.value = today;
+      pulseDateSelect.max = today;
+      pulseDateLabel.textContent = today;
+      pulseDateSelect.addEventListener('change', () => {
+        pulseDateLabel.textContent = pulseDateSelect.value;
+        render();
+      });
+      monthSelect.addEventListener('change', render);
+    }
+
+    async function initDashboard() {
+      const remote = await fetchRemoteData();
+      data = remote.data;
+      config = remote.config;
+      initializeState();
+      render();
+    }
+
+    initDashboard();
+
+    const formatINR = value => {
+      const abs = Math.abs(Math.round(value));
+      const digits = abs.toString().split('').reverse();
+      let formatted = [];
+      for (let i = 0; i < digits.length; i++) {
+        formatted.push(digits[i]);
+        if (i === 2 || (i > 2 && (i - 2) % 2 === 1)) {
+          if (i !== digits.length - 1) formatted.push(',');
+        }
+      }
+      formatted = formatted.reverse().join('');
+      return (value < 0 ? '-' : '') + config.currency + formatted;
+    };
+
+    const getDaysInMonth = (year, month) => new Date(year, month, 0).getDate();
+    const sum = items => items.reduce((total, item) => total + item.amount, 0);
+    const groupBy = (items, key) => items.reduce((acc, item) => { acc[item[key]] = (acc[item[key]] || 0) + item.amount; return acc; }, {});
+
+    function createSparkline(values) {
+      if (!values.length) return '<p class="chip">No activity for this month</p>';
+      const width = 320;
+      const height = 120;
+      const max = Math.max(...values, 1);
+      const step = width / Math.max(values.length - 1, 1);
+      const points = values.map((value, index) => `${index * step},${height - ((value / max) * (height - 24)) - 12}`);
+      return `
+        <svg viewBox="0 0 ${width} ${height}" class="sparkline">
+          <defs>
+            <linearGradient id="sparkGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#38bdf8" />
+              <stop offset="100%" stop-color="#818cf8" />
+            </linearGradient>
+          </defs>
+          <polyline fill="none" stroke="url(#sparkGradient)" stroke-width="4" points="${points.join(' ')}" />
+          ${values.map((value, index) => {
+            const x = index * step;
+            const y = height - ((value / max) * (height - 24)) - 12;
+            return `<circle cx="${x}" cy="${y}" r="4" fill="#38bdf8" />`;
+          }).join('')}
+        </svg>
+      `;
+    }
+
+    function createDonut(totals) {
+      const entries = Object.entries(totals).sort((a,b) => b[1] - a[1]);
+      const total = sum(entries.map(([, amount]) => ({ amount })));
+      if (!entries.length) return '<p class="chip">No expenses to display</p>';
+      let startAngle = 0;
+      const radius = 90;
+      const center = 120;
+      const colors = ['#38bdf8', '#818cf8', '#f472b6', '#fb7185', '#34d399', '#facc15', '#60a5fa', '#a78bfa'];
+      const segments = entries.map(([category, amount], index) => {
+        const slice = (amount / total) * 360;
+        const largeArc = slice > 180 ? 1 : 0;
+        const startRad = Math.PI * startAngle / 180;
+        const endRad = Math.PI * (startAngle + slice) / 180;
+        const x1 = center + radius * Math.cos(startRad);
+        const y1 = center + radius * Math.sin(startRad);
+        const x2 = center + radius * Math.cos(endRad);
+        const y2 = center + radius * Math.sin(endRad);
+        const path = `M${center},${center} L${x1},${y1} A${radius},${radius} 0 ${largeArc} 1 ${x2},${y2} Z`;
+        startAngle += slice;
+        return `<path d="${path}" fill="${colors[index % colors.length]}" />`;
+      }).join('');
+      return `
+        <div style="display:grid;grid-template-columns:220px 1fr;gap:18px;align-items:center;">
+          <svg viewBox="0 0 240 240" class="donut">${segments}<circle cx="120" cy="120" r="48" fill="rgba(10, 16, 28, 0.95)" /></svg>
+          <div>${entries.slice(0, 6).map(([category, amount], index) => `
+            <div class="legend-item"><span style="background:${colors[index % colors.length]}"></span>${category} <strong>${Math.round((amount / total) * 100)}%</strong></div>
+          `).join('')}</div>
+        </div>
+      `;
+    }
+
+    function renderSummary(month) {
+      const monthRows = activeData.filter(item => item.date.slice(0, 7) === month);
+      const expenses = monthRows.filter(r => r.type !== 'income');
+      const income = monthRows.filter(r => r.type === 'income');
+      const spent = sum(expenses);
+      const earned = sum(income);
+      const net = earned - spent;
+      const days = getDaysInMonth(+month.slice(0, 4), +month.slice(5));
+      const average = spent / Math.max(days, 1);
+      const progress = config.monthlyBudget ? Math.min((spent / config.monthlyBudget) * 100, 150) : 0;
+      const topCategory = Object.entries(groupBy(expenses, 'category')).sort((a,b) => b[1] - a[1])[0] || ['None', 0];
+      document.getElementById('spentKpi').textContent = formatINR(spent);
+      document.getElementById('netKpi').textContent = formatINR(net);
+      document.getElementById('avgKpi').textContent = formatINR(average);
+      document.getElementById('budgetUsage').textContent = `${Math.round(progress)}%`;
+      document.getElementById('budgetFill').style.width = `${progress}%`;
+      document.getElementById('budgetMeta').textContent = `${formatINR(spent)} of ${formatINR(config.monthlyBudget)} used · top ${topCategory[0]}`;
+    }
+
+    function getHourlySpending(date) {
+      const rows = activeData.filter(item => item.date === date && item.type !== 'income');
+      const hourly = Array.from({ length: 24 }, () => 0);
+      rows.forEach(r => {
+        const createdAt = new Date(r.created_at);
+        if (!Number.isNaN(createdAt.getTime()) && createdAt.toISOString().slice(0, 10) === date) {
+          const hour = createdAt.getHours();
+          hourly[hour] += r.amount;
+        }
+      });
+      return hourly;
+    }
+
+    function renderPulse(month) {
+      const selectedDate = pulseDateSelect.value || today;
+      pulseDateLabel.textContent = selectedDate;
+      const hourly = getHourlySpending(selectedDate);
+      const peak = Math.max(...hourly);
+      document.getElementById('spendPulse').innerHTML = createSparkline(hourly);
+      document.getElementById('peakSpend').textContent = formatINR(peak);
+
+      const labels = Array.from({ length: 24 }, (_, hour) => {
+        if (hour === 0 || hour === 6 || hour === 12 || hour === 18 || hour === 23) {
+          return `${hour}:00`;
+        }
+        return '';
+      });
+      document.getElementById('pulseTimeAxis').innerHTML = labels.map(label => `<span>${label}</span>`).join('');
+    }
+
+    function renderWeekly(month) {
+      const rows = activeData.filter(item => item.date.slice(0, 7) === month && item.type !== 'income');
+      const weeks = [0, 0, 0, 0, 0];
+      rows.forEach(r => {
+        const day = +r.date.slice(8, 10);
+        const weekIndex = Math.min(4, Math.floor((day - 1) / 7));
+        weeks[weekIndex] += r.amount;
+      });
+      const max = Math.max(...weeks, 1);
+      document.getElementById('weeklyBars').innerHTML = weeks.map((value, index) => `
+        <div class="bar-column">
+          <div class="bar-value">${formatINR(value)}</div>
+          <div class="bar-column-fill" style="height:${Math.max(40, Math.round((value / max) * 200))}px"></div>
+          <span>W${index + 1}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderDonut(month) {
+      const rows = activeData.filter(item => item.date.slice(0, 7) === month && item.type !== 'income');
+      const totals = groupBy(rows, 'category');
+      document.getElementById('donutChart').innerHTML = createDonut(totals);
+    }
+
+    function renderBudgetPanel(month) {
+      const rows = activeData.filter(item => item.date.slice(0, 7) === month && item.type !== 'income');
+      const totals = groupBy(rows, 'category');
+      document.getElementById('budgetPanel').innerHTML = Object.entries(config.budgets).map(([category, cap]) => {
+        const spent = totals[category] || 0;
+        const percent = cap ? Math.min((spent / cap) * 100, 150) : 0;
+        return `
+          <div class="budget-row">
+            <div><strong>${category}</strong><span class="micro">${formatINR(spent)} / ${formatINR(cap)}</span></div>
+            <div class="bar-base"><div class="bar-fill ${spent > cap ? 'alert' : ''}" style="width:${percent}%"></div></div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderTrendPanel() {
+      const monthsList = [...new Set(activeData.filter(item => item.type !== 'income').map(item => item.date.slice(0, 7)))].sort();
+      const totals = monthsList.map(month => ({ month, amount: sum(activeData.filter(r => r.type !== 'income' && r.date.slice(0, 7) === month)) }));
+      document.getElementById('trendPanel').innerHTML = `
+        <h2>Trend overview</h2>
+        <div class="insight-grid">${totals.map(row => `
+          <div class="insight-card"><strong>${formatINR(row.amount)}</strong><span>${row.month}</span></div>
+        `).join('')}</div>
+      `;
+    }
+
+    function renderRecentPanel(month) {
+      const rows = activeData.filter(item => item.date.slice(0, 7) === month).sort((a,b) => b.created_at.localeCompare(a.created_at)).slice(0, 8);
+      document.getElementById('recentPanel').innerHTML = `
+        <h2>Recent transactions</h2>
+        ${rows.map(row => `
+          <div class="list-row">
+            <span>${row.note}</span>
+            <span class="${row.type === 'income' ? 'income' : 'expense'}">${formatINR(row.amount)}</span>
+          </div>
+        `).join('')}
+      `;
+    }
+
+    function renderInsightPanel(month) {
+      const rows = activeData.filter(item => item.date.slice(0, 7) === month && item.type !== 'income');
+      const total = sum(rows);
+      const categories = groupBy(rows, 'category');
+      const top = Object.entries(categories).sort((a,b) => b[1] - a[1])[0] || ['None', 0];
+      const discretionary = sum(rows.filter(r => ['food','luxuries','clothes'].includes(r.category)));
+      const alertCategories = Object.entries(config.budgets).filter(([category, cap]) => (categories[category] || 0) > cap).map(([category]) => category);
+      const selectedMonth = monthSelect.value;
+      const monthIndex = months.indexOf(selectedMonth);
+      const prevMonth = monthIndex > 0 ? months[monthIndex - 1] : null;
+      const prevSpend = prevMonth ? sum(activeData.filter(r => r.type !== 'income' && r.date.slice(0, 7) === prevMonth)) : 0;
+      const trend = prevSpend ? `${Math.round(((total - prevSpend) / prevSpend) * 100)}% ${total > prevSpend ? 'up' : 'down'}` : 'no prior month';
+      document.getElementById('insightPanel').innerHTML = `
+        <h2>Actionable insights</h2>
+        <div class="insight-grid">
+          <div class="insight-card"><strong>${formatINR(total)}</strong><span>Total spend</span></div>
+          <div class="insight-card"><strong>${top[0]}</strong><span>Top category</span></div>
+          <div class="insight-card"><strong>${formatINR(discretionary)}</strong><span>Discretionary spend</span></div>
+          <div class="insight-card"><strong>${alertCategories.length}</strong><span>Over budget</span></div>
+          <div class="insight-card"><strong>${trend}</strong><span>Month-on-month</span></div>
+        </div>
+      `;
+    }
+
+    function render() {
+      const selectedMonth = monthSelect.value || months[months.length - 1];
+      document.querySelector('h1').textContent = activeChatId ? `Expense Dashboard · chat ${activeChatId}` : 'Expense Dashboard';
+      renderSummary(selectedMonth);
+      renderPulse(selectedMonth);
+      renderWeekly(selectedMonth);
+      renderDonut(selectedMonth);
+      renderBudgetPanel(selectedMonth);
+      renderTrendPanel();
+      renderRecentPanel(selectedMonth);
+      renderInsightPanel(selectedMonth);
+    }
+
+    monthSelect.addEventListener('change', render);
+  </script>
+</body>
+</html>
