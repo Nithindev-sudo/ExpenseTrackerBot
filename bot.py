@@ -183,6 +183,11 @@ def main():
 
 
     print("Bot running...")
+    try:
+        app.bot.delete_webhook(drop_pending_updates=True)
+        print("Deleted any existing webhook before polling.")
+    except Exception as e:
+        print(f"Warning: could not delete webhook before polling: {e}")
 
 
     app.run_polling()
