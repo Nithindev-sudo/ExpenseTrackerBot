@@ -34,10 +34,10 @@ This project includes a Telegram bot and a dashboard backed by a database.
 
 1. Create a new Railway project.
 2. Add a PostgreSQL plugin.
-3. Set environment variables in Railway:
-   - `DATABASE_URL`
-   - `TELEGRAM_TOKEN`
-   - `GROQ_API_KEY`
+3. Set environment variables on **both** the web and worker services:
+   - `DATABASE_URL` (use the same PostgreSQL URL for both services)
+   - `TELEGRAM_TOKEN` (worker only)
+   - `GROQ_API_KEY` (worker only)
 4. Use the following services:
    - Web service: `python server.py`
    - Worker service: `python bot.py`

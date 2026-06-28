@@ -470,6 +470,8 @@
     const activeChatId = getQueryParam('chat_id');
     let data = [];
     let config = {};
+    let activeData = [];
+    let months = [];
     const monthSelect = document.getElementById('monthSelect');
     const pulseDateSelect = document.getElementById('pulseDateSelect');
     const pulseDateLabel = document.getElementById('pulseDateLabel');
@@ -513,8 +515,8 @@
     }
 
     function initializeState() {
-      const activeData = activeChatId ? data.filter(item => String(item.chat_id) === String(activeChatId)) : data;
-      const months = [...new Set(activeData.map(item => item.date.slice(0, 7)))].sort();
+      activeData = activeChatId ? data.filter(item => String(item.chat_id) === String(activeChatId)) : data;
+      months = [...new Set(activeData.map(item => item.date.slice(0, 7)))].sort();
       monthSelect.innerHTML = '';
       months.forEach(month => {
         const option = document.createElement('option');

@@ -23,12 +23,25 @@ def load_config() -> dict:
 
 @app.route("/api/expenses")
 def api_expenses():
-    chat_id = request.args.get("chat_id", type=int)
+    chat_id = request.args.get("chat_id")
     db = ExpenseDB()
     rows = db.all_rows()
     if chat_id is not None:
-        rows = [row for row in rows if row["chat_id"] == chat_id]
-    return jsonify(rows)
+        rows = [row for row in rows if str(row["chat_id"]) == str(chat_id)]
+    payload = [
+        {
+            "id": row["id"],
+            "date": row["date"],
+            "category": row["category"],
+            "amount": float(row["amount"]),
+            "note": row["note"],
+            "type": row["type"],
+            "chat_id": row["chat_id"],
+            "created_at": row["created_at"],
+        }
+        for row in rows
+    ]
+    return jsonify(payload)
 
 
 @app.route("/api/config")
