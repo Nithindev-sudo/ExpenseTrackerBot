@@ -161,6 +161,7 @@ def main():
 
 
     print("Bot running...")
+    print("Bot initialised and Debug mode is off.!!...")
 
     app=ApplicationBuilder().token(
         config["telegram_token"]
