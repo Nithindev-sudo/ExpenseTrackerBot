@@ -71,6 +71,8 @@ Choose one:
 - Fitness
 - Bills
 - Entertainment
+- Groceries
+- Education
 - Other
 
 type:
